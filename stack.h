@@ -22,6 +22,12 @@ class StackState<T, Ts ...> : StackState<Ts ...>
     template <class ... NoMatters>
     friend class StackState;
     void* top;
+
+    template <class ... Args>
+    StackState(const StackState<Ts ...>& prev, void* top, T& front) :
+        StackState<Ts ...>{ prev },
+        top{ top },
+        front{ front } { }
 public:
     T& front;
 
@@ -36,17 +42,11 @@ public:
         return (StackState<Ts ...>&)*this;
     }
 
-    template <class ... Args>
-    StackState(const StackState<Ts ...>& prev, void* top, T& front)  :
-    StackState<Ts ...> { prev },
-    top { top },
-    front { front } { }
-
     template <class U, class ... Nexts>
     StackState(const StackState<U, Nexts ...>& other) :
-    StackState<Ts ...> { (const StackState<Nexts ...>&)other },
-    top{ other.top },
-    front { other.front }
+        StackState<Ts ...>{ (const StackState<Nexts ...>&)other },
+        top{ other.top },
+        front{ other.front }
     { }
 };
 

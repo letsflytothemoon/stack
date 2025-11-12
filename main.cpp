@@ -1,16 +1,16 @@
 #include <iostream>
 #include "testclasses.h"
-#include "stack.h"
-
+#include "stack/stack.h"
 
 void F(StackState<A> stack) {
     StackState<B> state = stack.Push<B>(stack.front);
     std::cout << state.front << std::endl;
     state.Pop();
+    stack.Pop();
 }
 
 int main(int argc, char* argv[]) {
-    char buffer[1024 * 1024];
+    char buffer[1024];
 
     StackState<> stack{ buffer };
 
@@ -22,6 +22,5 @@ int main(int argc, char* argv[]) {
     s2.Pop();
     s1.Pop();
     
-
     return 0;
 }
