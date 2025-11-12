@@ -1,4 +1,6 @@
 #pragma once
+#include <utility>
+
 
 template <class ... Ts>
 class StackState
@@ -9,9 +11,26 @@ class StackState
 public:
     StackState(void* top) : top{ top } { }
 
+    template <class ... OtherTs>
+    StackState(const StackState<OtherTs ...>& other) : top{ other.top } {
+        
+    }
+
     template <class T, class ... Args>
     inline StackState<T, Ts ...> Push(Args&& ... args) const {
         T& ref = *new (top) T{std::forward<Args>(args) ...};
+        return { *this, (char*)top + sizeof(T), ref };
+    }
+
+    template <class T>
+    inline StackState<T, Ts ...> Push(const T& value) const {
+        T& ref = *new (top) T{ value };
+        return { *this, (char*)top + sizeof(T), ref };
+    }
+
+    template <class T>
+    inline StackState<T, Ts ...> Push(T&& value) const {
+        T& ref = *new (top) T{ std::move(value) };
         return { *this, (char*)top + sizeof(T), ref };
     }
 };
@@ -34,6 +53,18 @@ public:
     template <class U, class ... Args>
     inline StackState<U, T, Ts ...> Push(Args&& ... args) const {
         U& ref = *new (top) U{std::forward<Args>(args) ...};
+        return { *this, (char*)top + sizeof(U), ref };
+    }
+
+    template <class U>
+    inline StackState<U, T, Ts ...> Push(const U& value) const {
+        U& ref = *new (top) U{value};
+        return { *this, (char*)top + sizeof(U), ref };
+    }
+
+    template <class U>
+    inline StackState<U, T, Ts ...> Push(U&& value) const {
+        U& ref = *new (top) U{ std::move(value) };
         return { *this, (char*)top + sizeof(U), ref };
     }
 
