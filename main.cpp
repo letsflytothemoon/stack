@@ -1,27 +1,34 @@
 #include <iostream>
-#include "testclasses.h"
 #include "stack.h"
-
-
-
-void F(StackState<> stack) {
-    StackState<B> state = stack.Push<B>();
-    std::cout << state.front << std::endl;
-    state.Pop();
-}
+#include "testclasses.h"
+#include "states.h"
 
 int main(int argc, char* argv[]) {
-    char buffer[4096];
+    char stateBuffer[4096];
+    char contextBuffer[4096];
 
-    StackState<> stack{ buffer };
+    auto contextStack = stack::StaticStack<> { contextBuffer }
+    .Push<int>(::socket);
 
-    StackState<A>    s1 = stack.Push(A{ 99 });
-    StackState<A, A> s2 = s1.Push(A{ 34 });
-
-    F(s2);
-
-    s2.Pop();
-    s1.Pop();
+    stack::DynamicStack<State> stateStack{ stateBuffer };
     
+
+    
+    stateStack.Push<Connecting>("127.0.0.1", contextStack.front);
+
+    State::UpdateResult result;
+    while ((result = stateStack.Top().Update()) == State::UpdateResult::ok);
+    if (result == State::UpdateResult::error) throw ":-(";
+    std::cout << "connected" << std::endl;
+    stateStack.Pop();
+    auto connectedContextStack = contextStack.Push<RingBuffer<1024>>();
+    stateStack.Push<Connected<1024>>(connectedContextStack);
+    while ((result = stateStack.Top().Update()) == State::UpdateResult::ok);
+    if (result == State::UpdateResult::error) throw ":-(";
+    stateStack.Pop();
+
+    contextStack.Pop(); //socket
+
+
     return 0;
 }
