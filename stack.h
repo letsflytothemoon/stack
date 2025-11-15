@@ -8,94 +8,94 @@ namespace stack
     {
         template <class ... NoMatters>
         friend class StackState;
-        void* top;
+        void* _top;
     public:
-        StaticStack(void* top) : top{ top } {}
+        StaticStack(void* _top) : _top{ _top } {}
 
         template <class ... OtherTs>
-        StaticStack(const StaticStack<OtherTs ...>& other) : top{ other.top } {}
+        StaticStack(const StaticStack<OtherTs ...>& other) : _top{ other._top } {}
 
         template <class T, class ... Args>
         inline StaticStack<T, Ts ...> Push(Args&& ... args) const {
-            T& ref = *new (top) T{ std::forward<Args>(args) ... };
-            return { *this, (char*)top + sizeof(T), ref };
+            T& ref = *new (_top) T{ std::forward<Args>(args) ... };
+            return { *this, (char*)_top + sizeof(T), ref };
         }
 
         template <class T>
         inline StaticStack<T, Ts ...> Push(const T& value) const {
-            T& ref = *new (top) T{ value };
-            return { *this, (char*)top + sizeof(T), ref };
+            T& ref = *new (_top) T{ value };
+            return { *this, (char*)_top + sizeof(T), ref };
         }
 
         template <class T>
         inline StaticStack<T, Ts ...> Push(T&& value) const {
-            T& ref = *new (top) T{ std::move(value) };
-            return { *this, (char*)top + sizeof(T), ref };
+            T& ref = *new (_top) T{ std::move(value) };
+            return { *this, (char*)_top + sizeof(T), ref };
         }
 
         void Clear() const { }
     };
 
+    template <unsigned int Position>
+    struct Extract
+    {
+        template <class S, class ... STs>
+        static auto& get(const StaticStack<S, STs ...>& inst) {
+            return Extract<Position - 1>::get((const StaticStack<STs ...>&)inst);
+        }
+    };
+
+    template<>
+    struct Extract<0>
+    {
+        template <class S, class ... STs>
+        static S& get(const StaticStack<S, STs ...>& inst) {
+            return inst.top;
+        }
+    };
+
     template <class T, class ... Ts>
     class StaticStack<T, Ts ...> : StaticStack<Ts ...>
     {
-        template <unsigned int Position>
-        struct Extract
-        {
-            template <class S, class ... STs>
-            static auto& get(const StaticStack<S, STs ...>& inst) {
-                return Extract<Position - 1>::get((const StaticStack<STs ...>&)inst);
-            }
-        };
-
-        template<>
-        struct Extract<0>
-        {
-            template <class S, class ... STs>
-            static S& get(const StaticStack<S, STs ...>& inst) {
-                return inst.front;
-            }
-        };
-
         template <class ... NoMatters>
         friend class StaticStack;
-        void* top;
+        void* _top;
 
         template <class ... Args>
-        StaticStack(const StaticStack<Ts ...>& prev, void* top, T& front) :
+        StaticStack(const StaticStack<Ts ...>& prev, void* _top, T& front) :
             StaticStack<Ts ...>{ prev },
-            top{ top },
-            front{ front } { }
+            _top{ _top },
+            top{ top } { }
     public:
-        T& front;
+        T& top;
 
         template <class U, class ... Args>
         inline StaticStack<U, T, Ts ...> Push(Args&& ... args) const {
-            U& ref = *new (top) U{ std::forward<Args>(args) ... };
-            return { *this, (char*)top + sizeof(U), ref };
+            U& ref = *new (_top) U{ std::forward<Args>(args) ... };
+            return { *this, (char*)_top + sizeof(U), ref };
         }
 
         template <class U>
         inline StaticStack<U, T, Ts ...> Push(const U& value) const {
-            U& ref = *new (top) U{ value };
-            return { *this, (char*)top + sizeof(U), ref };
+            U& ref = *new (_top) U{ value };
+            return { *this, (char*)_top + sizeof(U), ref };
         }
 
         template <class U>
         inline StaticStack<U, T, Ts ...> Push(U&& value) const {
-            U& ref = *new (top) U{ std::move(value) };
-            return { *this, (char*)top + sizeof(U), ref };
+            U& ref = *new (_top) U{ std::move(value) };
+            return { *this, (char*)_top + sizeof(U), ref };
         }
 
         inline const StaticStack<Ts ...>& Pop() const {
             (&front)->~T();
-            return (StaticStack<Ts ...>&) * this;
+            return (StaticStack<Ts ...>&) *this;
         }
 
         template <class U, class ... Nexts>
         StaticStack(const StaticStack<U, Nexts ...>& other) :
             StaticStack<Ts ...>{ (const StaticStack<Nexts ...>&)other },
-            top{ other.top },
+            _top{ other._top },
             front{ other.front } { }
 
         template <unsigned int Position>
