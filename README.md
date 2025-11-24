@@ -1,0 +1,1 @@
+If I think it could be useful, I'll keep it. If not, I'll delete it. There's nothing much to say about it yet.

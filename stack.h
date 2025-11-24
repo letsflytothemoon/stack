@@ -88,7 +88,7 @@ namespace stack
         }
 
         inline const StaticStack<Ts ...>& Pop() const {
-            (&front)->~T();
+            (&top)->~T();
             return (StaticStack<Ts ...>&) *this;
         }
 
@@ -96,7 +96,7 @@ namespace stack
         StaticStack(const StaticStack<U, Nexts ...>& other) :
             StaticStack<Ts ...>{ (const StaticStack<Nexts ...>&)other },
             _top{ other._top },
-            front{ other.front } { }
+            top{ other.top } { }
 
         template <unsigned int Position>
         auto& at() const {
